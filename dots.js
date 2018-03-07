@@ -83,9 +83,7 @@ const Dot = Object.freeze.call({}, {
         let _y = y;
         let _radius = radius;
         let _colors = colors;
-    
-        console.log(self);
-        
+            
         let numClicks = 0;
         
         const circle = Circle.new();
