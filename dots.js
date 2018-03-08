@@ -55,7 +55,7 @@ button.innerText = "Clear";
 button.addEventListener("click", function(e) {
     e.preventDefault();
     svg.clearHTML();
-    allDots.clear();
+    Dot.all.clear();
 });
 
 const RADIUS = 50;
@@ -75,9 +75,17 @@ const Circle = Object.freeze({
     },
 });
 
-const Dot = Object.freeze.call({}, {
+const Dot = (() => {
+             
+    let lastId = 0;
+    
+    return Object.freeze.call({}, {
+        
+    all: [],
     
     new: function(x, y, radius, colors) {
+    
+        const _id = lastId++;
             
         let _x = x;
         let _y = y;
@@ -95,19 +103,19 @@ const Dot = Object.freeze.call({}, {
                 this.fill = this.stroke = color;
             },
         });
-        circle.color = colors[numClicks];
+        circle.color = _colors[numClicks];
         
         let _svg = null;
         
         const onClick = function() {
             numClicks++;
-            if (numClicks >= colors.length) {
+            if (numClicks >= _colors.length) {
                 numClicks = -1; // will be 0 after recursive call
                 circle.x = _x = Math.random() * _svg.width;
                 circle.y = _y = Math.random() * _svg.height;
                 onClick(); // reset color
             } else {
-                circle.color = colors[numClicks];
+                circle.color = _colors[numClicks];
             }
         };
         
@@ -118,6 +126,10 @@ const Dot = Object.freeze.call({}, {
         });
         
         const dot = {
+            
+            get id() {
+                return _id;
+            },
             
             get x() {
                 return _x;
@@ -148,7 +160,7 @@ const Dot = Object.freeze.call({}, {
             },
             
             set colors(colors) {
-                circle.colors = _colors = colors;
+                _colors = colors;
             },
             
             display: function(svg) {
@@ -161,6 +173,7 @@ const Dot = Object.freeze.call({}, {
                 if (_svg !== null) {
                     circle.remove();
                     _svg = null;
+                    Dot.all.splice(Dot.all.findIndex(dot => dot.id === _id), 1);
                 }
             },
             
@@ -170,14 +183,12 @@ const Dot = Object.freeze.call({}, {
         
     },
     
-});
-
-const allDots = [];
+})})();
 
 const addCircleAt = function(x, y) {
     const dot = Dot.new(x, y, RADIUS, COLORS);
     dot.display(svg);
-    allDots.push(dot);
+    Dot.all.push(dot);
 };
 
 svg.addEventListener("click", e => addCircleAt(e.offsetX, e.offsetY, RADIUS, COLORS));
