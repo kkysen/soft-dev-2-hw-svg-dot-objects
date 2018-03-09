@@ -14,10 +14,6 @@ Element.prototype.setAttributes = function(attributes) {
     }
 };
 
-const div = document.body.appendChild(document.createElement("div"));
-
-const svgCreate = document.createElementNS.bind(document, "http://www.w3.org/2000/svg");
-
 Element.prototype.addProperty = function(property, attribute) {
     if (!attribute) {
         attribute = property;
@@ -44,6 +40,10 @@ Element.prototype.addProperties = function(propertiesToAttributes) {
     }
 };
 
+const svgCreate = document.createElementNS.bind(document, "http://www.w3.org/2000/svg");
+
+const div = document.body.appendChild(document.createElement("div"));
+
 const svg = div.appendChild(svgCreate("svg"));
 svg.addProperties(["width", "height"]);
 svg.width = 600;
@@ -62,6 +62,7 @@ const RADIUS = 50;
 const COLORS = ["red", "blue", "green"];
 
 const Circle = Object.freeze({
+    
     new: function() {
         const circle = svgCreate("circle");
         circle.addProperties({
@@ -73,122 +74,137 @@ const Circle = Object.freeze({
         });
         return circle;
     },
+    
 });
 
 const Dot = (() => {
-             
+    
     let lastId = 0;
     
     return Object.freeze.call({}, {
         
-    all: [],
-    
-    new: function(x, y, radius, colors) {
-    
-        const _id = lastId++;
-            
-        let _x = x;
-        let _y = y;
-        let _radius = radius;
-        let _colors = colors;
-            
-        let numClicks = 0;
+        all: [],
         
-        const circle = Circle.new();
-        circle.x = x;
-        circle.y = y;
-        circle.radius = radius;
-        Object.defineProperty(circle, "color", {
-            set: function(color) {
-                this.fill = this.stroke = color;
-            },
-        });
-        circle.color = _colors[numClicks];
-        
-        let _svg = null;
-        
-        const onClick = function() {
-            numClicks++;
-            if (numClicks >= _colors.length) {
-                numClicks = -1; // will be 0 after recursive call
-                circle.x = _x = Math.random() * _svg.width;
-                circle.y = _y = Math.random() * _svg.height;
-                onClick(); // reset color
-            } else {
-                circle.color = _colors[numClicks];
-            }
-        };
-        
-        circle.addEventListener("click", function(e) {
-            e.preventDefault();
-            e.stopPropagation();
-            onClick();   
-        });
-        
-        const dot = {
+        new: function(x, y, radius, colors) {
             
-            get id() {
-                return _id;
-            },
+            const _id = lastId++;
             
-            get x() {
-                return _x;
-            },
+            let _x = x;
+            let _y = y;
+            let _radius = radius;
+            let _color = null;
+            let _colors = colors;
             
-            set x(x) {
-                circle.x = _x = x;
-            },
+            let numClicks = 0;
             
-            get y() {
-                return _y;
-            },
+            const circle = Circle.new();
+            circle.x = x;
+            circle.y = y;
+            circle.radius = radius;
+            Object.defineProperty(circle, "color", {
+                set: function(color) {
+                    _color = color;
+                    this.fill = this.stroke = color;
+                },
+            });
+            circle.color = _colors[numClicks];
             
-            set y(y) {
-                circle.y = _y = y;
-            },
+            let _svg = null;
             
-            get radius() {
-                return _radius;
-            },
-            
-            set radius(radius) {
-                circle.radius = _radius = radius;
-            },
-            
-            get colors() {
-                return _colors;
-            },
-            
-            set colors(colors) {
-                _colors = colors;
-            },
-            
-            display: function(svg) {
-                this.remove();
-                _svg = svg;
-                svg.appendChild(circle);
-            },
-            
-            remove: function() {
-                if (_svg !== null) {
-                    circle.remove();
-                    _svg = null;
-                    Dot.all.splice(Dot.all.findIndex(dot => dot.id === _id), 1);
+            const onClick = function() {
+                numClicks++;
+                if (numClicks >= _colors.length) {
+                    numClicks = -1; // will be 0 after recursive call
+                    circle.x = _x = Math.random() * _svg.width;
+                    circle.y = _y = Math.random() * _svg.height;
+                    onClick(); // reset color
+                } else {
+                    circle.color = _colors[numClicks];
                 }
-            },
+            };
             
-        };
+            circle.addEventListener("click", function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                onClick();
+            });
+            
+            const dot = {
+                
+                get id() {
+                    return _id;
+                },
+                
+                get x() {
+                    return _x;
+                },
+                
+                set x(x) {
+                    circle.x = _x = x;
+                },
+                
+                get y() {
+                    return _y;
+                },
+                
+                set y(y) {
+                    circle.y = _y = y;
+                },
+                
+                get radius() {
+                    return _radius;
+                },
+                
+                set radius(radius) {
+                    circle.radius = _radius = radius;
+                },
+                
+                get color() {
+                    return _color;
+                },
+                
+                set color(color) {
+                    circle.color = color;
+                },
+                
+                get colors() {
+                    return _colors;
+                },
+                
+                set colors(colors) {
+                    _colors = colors;
+                    numClicks = -1;
+                    onClick();
+                },
+                
+                display: function(svg) {
+                    this.remove();
+                    _svg = svg;
+                    svg.appendChild(circle);
+                },
+                
+                remove: function() {
+                    if (_svg !== null) {
+                        circle.remove();
+                        _svg = null;
+                        Dot.all.splice(Dot.all.findIndex(dot => dot.id === _id), 1);
+                    }
+                },
+                
+            };
+            
+            return Object.freeze(dot);
+            
+        },
         
-        return Object.freeze(dot);
+        at: function(x, y, radius = RADIUS, colors = COLORS) {
+            const dot = Dot.new(x, y, radius, colors);
+            dot.display(svg);
+            Dot.all.push(dot);
+        },
         
-    },
+    });
     
-})})();
+})();
 
-const addCircleAt = function(x, y) {
-    const dot = Dot.new(x, y, RADIUS, COLORS);
-    dot.display(svg);
-    Dot.all.push(dot);
-};
-
-svg.addEventListener("click", e => addCircleAt(e.offsetX, e.offsetY, RADIUS, COLORS));
+svg.addEventListener("click", e => Dot.at(e.offsetX, e.offsetY));
